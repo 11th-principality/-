@@ -186,6 +186,7 @@ input{
 .unit{
   margin-top:18px;
   color:var(--gold);
+  font-weight:bold;
 }
 
 .stat{
@@ -216,6 +217,8 @@ input{
   border:1px solid var(--gold-dim);
   color:var(--gold-light);
   cursor:pointer;
+  font-family:'Cinzel',serif;
+  letter-spacing:.2em;
 }
 </style>
 </head>
@@ -274,280 +277,144 @@ ReichsRitter
 </div>
 
 <script>
-
-const signs = [
-"Aries","Taurus","Gemini","Cancer",
-"Leo","Virgo","Libra","Scorpio",
-"Sagittarius","Capricorn","Aquarius","Pisces"
-];
+// 診断ロジック
+const signs = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
 
 const characters = [
-{ name:"楠本柊生帝國元帥", title:"皇任独裁官 / 第5公國最高司令官", sun:"Capricorn", moon:"Leo", mercury:"Sagittarius", mars:"Aries", unit:"第5公國最高司令部" },
-{ name:"立花馨大将", title:"統合幕僚総監 / 第4公國最高司令官", sun:"Aries", moon:"Cancer", mercury:"Taurus", mars:"Capricorn", unit:"第4公國最高司令部" },
-{ name:"定光寺輝信中将", title:"統帥参謀総長 / 第7公國最高司令官", sun:"Leo", moon:"Virgo", mercury:"Leo", mars:"Aquarius", unit:"第7公國最高司令部" }
+  { name:"楠本柊生帝國元帥", title:"皇任独裁官 / 第5公國最高司令官", sun:"Capricorn", moon:"Leo", mercury:"Sagittarius", mars:"Aries", unit:"第5公國最高司令部" },
+  { name:"立花馨大将", title:"統合幕僚総監 / 第4公國最高司令官", sun:"Aries", moon:"Cancer", mercury:"Taurus", mars:"Capricorn", unit:"第4公國最高司令部" },
+  { name:"定光寺輝信中将", title:"統帥参謀総長 / 第7公國最高司令官", sun:"Leo", moon:"Virgo", mercury:"Leo", mars:"Aquarius", unit:"第7公國最高司令部" }
 ];
 
 const interpretation = {
-sun:{
-Aries:"前進意欲が強く、停滞を嫌う。",
-Taurus:"安定した持久力を持つ。",
-Gemini:"状況変化への適応が速い。",
-Cancer:"保護対象への献身性が高い。",
-Leo:"指揮権掌握への意識が強い。",
-Virgo:"分析と修正能力に優れる。",
-Libra:"全体均衡を重視する。",
-Scorpio:"極端な集中力を持つ。",
-Sagittarius:"拡大型思考傾向。",
-Capricorn:"統制と結果を重視する。",
-Aquarius:"独自理論による改革志向。",
-Pisces:"状況同調能力が高い。"
-},
-
-moon:{
-Aries:"精神反応速度が速い。",
-Taurus:"精神安定性が高い。",
-Gemini:"感情の揺らぎを機動力に転換する。",
-Cancer:"仲間内での調和を求める。",
-Leo:"誇り高い精神力。",
-Virgo:"環境把握能力が高い。",
-Libra:"均整を保つ。",
-Scorpio:"感情集中傾向。",
-Sagittarius:"理想追求型。",
-Capricorn:"感情抑制能力が高い。",
-Aquarius:"客観性を維持する。",
-Pisces:"周囲へ同調しやすい。"
-}
+  sun: { /* ... 省略せず全部残してます */ 
+    Aries:"前進意欲が強く、停滞を嫌う。", Taurus:"安定した持久力を持つ。", Gemini:"状況変化への適応が速い。",
+    Cancer:"保護対象への献身性が高い。", Leo:"指揮権掌握への意識が強い。", Virgo:"分析と修正能力に優れる。",
+    Libra:"全体均衡を重視する。", Scorpio:"極端な集中力を持つ。", Sagittarius:"拡大型思考傾向。",
+    Capricorn:"統制と結果を重視する。", Aquarius:"独自理論による改革志向。", Pisces:"状況同調能力が高い。"
+  },
+  moon: {
+    Aries:"精神反応速度が速い。", Taurus:"精神安定性が高い。", Gemini:"感情の揺らぎを機動力に転換する。",
+    Cancer:"仲間内での調和を求める。", Leo:"誇り高い精神力。", Virgo:"環境把握能力が高い。",
+    Libra:"均整を保つ。", Scorpio:"感情集中傾向。", Sagittarius:"理想追求型。",
+    Capricorn:"感情抑制能力が高い。", Aquarius:"客観性を維持する。", Pisces:"周囲へ同調しやすい。"
+  }
 };
 
 function getSign(longitude){
-return signs[Math.floor(longitude / 30)];
+  return signs[Math.floor(longitude / 30)];
 }
 
 function getPlanetData(dateObj){
+  const time = new Astronomy.AstroTime(dateObj);
+  const targets = {sun:Astronomy.Body.Sun, moon:Astronomy.Body.Moon, mercury:Astronomy.Body.Mercury, mars:Astronomy.Body.Mars};
+  const result = {};
 
-const time = new Astronomy.AstroTime(dateObj);
-
-const targets = {
-sun:Astronomy.Body.Sun,
-moon:Astronomy.Body.Moon,
-mercury:Astronomy.Body.Mercury,
-venus:Astronomy.Body.Venus,
-mars:Astronomy.Body.Mars,
-jupiter:Astronomy.Body.Jupiter,
-saturn:Astronomy.Body.Saturn,
-uranus:Astronomy.Body.Uranus,
-neptune:Astronomy.Body.Neptune,
-pluto:Astronomy.Body.Pluto
-};
-
-const result = {};
-
-for(const key in targets){
-
-const vector = Astronomy.GeoVector(
-targets[key],
-time,
-false
-);
-
-const ecliptic = Astronomy.Ecliptic(vector);
-
-let lon = ecliptic.elon;
-
-if(typeof lon !== "number"){
-throw new Error("黄道座標変換に失敗しました");
+  for(const key in targets){
+    const vector = Astronomy.GeoVector(targets[key], time, false);
+    const ecliptic = Astronomy.Ecliptic(vector);
+    let lon = ecliptic.elon;
+    if(lon < 0) lon += 360;
+    result[key] = { longitude: lon, sign: getSign(lon) };
+  }
+  return result;
 }
 
-if(lon < 0){
-lon += 360;
+function getCompatibility(a, b){
+  if(a === b) return 94;
+  const elements = {Fire:["Aries","Leo","Sagittarius"], Earth:["Taurus","Virgo","Capricorn"], Air:["Gemini","Libra","Aquarius"], Water:["Cancer","Scorpio","Pisces"]};
+  const getElement = sign => Object.keys(elements).find(el => elements[el].includes(sign));
+  const ea = getElement(a), eb = getElement(b);
+  if(ea === eb) return 86;
+  if((ea==="Fire" && eb==="Air") || (ea==="Air" && eb==="Fire") || 
+     (ea==="Earth" && eb==="Water") || (ea==="Water" && eb==="Earth")) return 78;
+  return 58;
 }
 
-result[key] = {
-longitude: lon,
-sign: getSign(lon)
-};
-
-}
-
-return result;
-}
-
-function getCompatibility(a,b){
-
-if(a === b) return 94;
-
-const elements = {
-Fire:["Aries","Leo","Sagittarius"],
-Earth:["Taurus","Virgo","Capricorn"],
-Air:["Gemini","Libra","Aquarius"],
-Water:["Cancer","Scorpio","Pisces"]
-};
-
-const getElement = sign =>
-Object.keys(elements).find(el =>
-elements[el].includes(sign)
-);
-
-const ea = getElement(a);
-const eb = getElement(b);
-
-if(ea === eb) return 86;
-
-if(
-(ea==="Fire" && eb==="Air") ||
-(ea==="Air" && eb==="Fire") ||
-(ea==="Earth" && eb==="Water") ||
-(ea==="Water" && eb==="Earth")
-) return 78;
-
-return 58;
-}
-
-function createStat(label,value){
-return `
-<div class="stat">
-<div class="stat-row">
-<span>${label}</span>
-<span>${value}%</span>
-</div>
-<div class="bar-bg">
-<div class="bar-fill" style="width:${value}%"></div>
-</div>
-</div>
-`;
+function createStat(label, value){
+  return `
+    <div class="stat">
+      <div class="stat-row"><span>\( {label}</span><span> \){value}%</span></div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${value}%"></div></div>
+    </div>`;
 }
 
 function runDiagnosis(){
+  const resultDiv = document.getElementById("result");
+  
+  if(typeof Astronomy === "undefined"){
+    resultDiv.innerHTML = `<p style="color:#ff6b6b;text-align:center;padding:40px;">Astronomy Engineの読み込みに失敗しました。<br>インターネット接続を確認してから、もう一度開いてください。</p>`;
+    return;
+  }
 
-const resultDiv = document.getElementById("result");
+  try{
+    const dateStr = document.getElementById("birthdate").value;
+    if(!dateStr) throw new Error("生年月日を入力してください");
 
-try{
+    const hourVal = parseInt(document.getElementById("hour").value) || 12;
+    const [year,month,day] = dateStr.split("-").map(Number);
+    const dateObj = new Date(year, month-1, day, hourVal, 0, 0);
 
-if(typeof Astronomy === "undefined"){
-throw new Error("Astronomy Engine の読み込みに失敗しました");
+    const planets = getPlanetData(dateObj);
+    const userSign = {
+      sun: planets.sun.sign,
+      moon: planets.moon.sign,
+      mercury: planets.mercury.sign,
+      mars: planets.mars.sign
+    };
+
+    let html = `
+      <div class="result-title">── 軍人人格解析結果 ──</div>
+      <div class="traits-card">
+        <div style="line-height:2;">
+          ${interpretation.sun[userSign.sun]}<br><br>
+          ${interpretation.moon[userSign.moon]}
+        </div>
+      </div>
+      <div class="result-title">── 各司令官との適合評定 ──</div>`;
+
+    const results = characters.map(char => {
+      const p = getCompatibility(userSign.sun, char.sun);
+      const m = getCompatibility(userSign.moon, char.moon);
+      const s = getCompatibility(userSign.mercury, char.mercury);
+      const a = getCompatibility(userSign.mars, char.mars);
+      const total = Math.floor((p*1.2 + m*1.15 + s*0.95 + a*0.9)/4);
+      return {char, total, p, m, s, a};
+    });
+
+    results.sort((a,b) => b.total - a.total);
+
+    results.forEach(({char, total, p, m, s, a}) => {
+      html += `
+        <div class="cmd-card">
+          <div class="cmd-header">
+            <div>
+              <div class="cmd-name">${char.name}</div>
+              <div class="cmd-title">${char.title}</div>
+            </div>
+            <div class="compatibility">${total}%</div>
+          </div>
+          ${createStat("戦闘目的", p)}
+          ${createStat("精神力", m)}
+          ${createStat("戦略思考", s)}
+          ${createStat("攻撃様式", a)}
+          <div class="unit">配属推奨：${char.unit}</div>
+        </div>`;
+    });
+
+    html += `<button class="reset-btn" onclick="location.reload()">もう一度診断する</button>`;
+    resultDiv.innerHTML = html;
+
+  } catch(err){
+    resultDiv.innerHTML = `<p style="color:#ff6b6b;text-align:center;padding:40px;">${err.message}</p>`;
+    console.error(err);
+  }
 }
 
-const dateStr = document.getElementById("birthdate").value;
-
-if(!dateStr){
-throw new Error("生年月日を入力してください");
-}
-
-const hourVal = parseInt(document.getElementById("hour").value);
-
-const [year,month,day] = dateStr.split("-").map(Number);
-
-const dateObj = new Date(
-year,
-month - 1,
-day,
-hourVal,
-0,
-0
-);
-
-const planets = getPlanetData(dateObj);
-
-const userSign = {
-sun: planets.sun.sign,
-moon: planets.moon.sign,
-mercury: planets.mercury.sign,
-mars: planets.mars.sign
-};
-
-let html = `
-<div class="result-title">
-── 軍人人格解析結果 ──
-</div>
-
-<div class="traits-card">
-
-<div style="line-height:2;">
-${interpretation.sun[userSign.sun]}
-<br><br>
-${interpretation.moon[userSign.moon]}
-</div>
-
-</div>
-
-<div class="result-title">
-── 各司令官との適合評定 ──
-</div>
-`;
-
-const results = characters.map(char => {
-
-const p = getCompatibility(userSign.sun, char.sun);
-const m = getCompatibility(userSign.moon, char.moon);
-const s = getCompatibility(userSign.mercury, char.mercury);
-const a = getCompatibility(userSign.mars, char.mars);
-
-const total = Math.floor(
-(p * 1.2 + m * 1.15 + s * 0.95 + a * 0.9) / 4
-);
-
-return { char,total,p,m,s,a };
-
+// ボタンイベント
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("diagnoseBtn").addEventListener("click", runDiagnosis);
 });
-
-results.sort((a,b)=>b.total-a.total);
-
-results.forEach(({char,total,p,m,s,a})=>{
-
-html += `
-<div class="cmd-card">
-
-<div class="cmd-header">
-
-<div>
-<div class="cmd-name">${char.name}</div>
-<div class="cmd-title">${char.title}</div>
-</div>
-
-<div class="compatibility">${total}%</div>
-
-</div>
-
-${createStat("戦闘目的",p)}
-${createStat("精神力",m)}
-${createStat("戦略思考",s)}
-${createStat("攻撃様式",a)}
-
-<div class="unit">
-配属推奨：${char.unit}
-</div>
-
-</div>
-`;
-
-});
-
-html += `
-<button class="reset-btn" onclick="location.reload()">
-もう一度診断する
-</button>
-`;
-
-resultDiv.innerHTML = html;
-
-}catch(err){
-
-resultDiv.innerHTML = `
-<p style="color:#ff6b6b;text-align:center;padding:40px;">
-${err.message}
-</p>
-`;
-
-console.error(err);
-
-}
-
-}
-
-document
-.getElementById("diagnoseBtn")
-.addEventListener("click", runDiagnosis);
-
 </script>
 
 </body>
