@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 
-  <script src="https://unpkg.com/astronomy-engine@2.1.19/astronomy.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.min.js"></script>
 
   <style>
     :root {
@@ -382,7 +382,7 @@ const nations = [
   }
 ];
 
-// 既存キャラクター構造（表示・相性ロジック互換用）
+// 既存キャラクター構造
 const characters = [
   { name: "楠本柊生帝國元帥", title: "皇任独裁官 / 第5公國最高司令官", sun: "Capricorn", moon: "Leo", mercury: "Sagittarius", mars: "Aries", unit: "第5公國最高司令部" },
   { name: "立花馨大将", title: "統合幕僚総監 / 第4公國最高司令官", sun: "Aries", moon: "Cancer", mercury: "Taurus", mars: "Capricorn", unit: "第4公國最高司令部" },
@@ -474,7 +474,7 @@ function getAspect(angle) {
   return null;
 }
 
-// 10天体データの高精度取得（地球中心ベクトル＆黄道変換）
+// 10天体データの高精度取得（赤道座標・赤経ベース版へ置き換え）
 function getPlanetData(dateObj) {
   const time = new Astronomy.AstroTime(dateObj);
   const targets = {
@@ -493,13 +493,17 @@ function getPlanetData(dateObj) {
   const result = {};
 
   for (const key in targets) {
-    // 地球中心座標を取得
-    const vector = Astronomy.GeoVector(targets[key], time, false);
+    // 赤道座標（Equator）を取得
+    const equ = Astronomy.Equator(
+      targets[key],
+      time,
+      null,
+      true,
+      true
+    );
 
-    // 黄道座標へ変換
-    const ecliptic = Astronomy.Ecliptic(vector);
-
-    let lon = ecliptic.elon;
+    // 時角表記の赤経（ra）を360度表記の度数（lon）に変換
+    let lon = equ.ra * 15;
 
     // マイナス補正
     if (lon < 0) {
@@ -544,7 +548,7 @@ function analyzeAspects(planets) {
   return result;
 }
 
-// 三区分・四元素に基づく古典相性計算
+// 相性計算
 function getCompatibility(a, b) {
   if (a === b) return 94;
 
@@ -622,7 +626,7 @@ function runDiagnosis() {
       const [year, month, day] = dateStr.split("-").map(Number);
       const dateObj = new Date(year, month - 1, day, hourVal, 0, 0);
 
-      // 高精度天体データの算出
+      // 赤道座標を基準にした天体データの算出
       const planets = getPlanetData(dateObj);
       const userAspects = analyzeAspects(planets);
 
@@ -753,7 +757,7 @@ function runDiagnosis() {
             </div>
             <div class="performance">
               ${performance}
-  </div>
+            </div>
             <div class="unit">
               配属推奨：${char.unit}
             </div>
