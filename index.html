@@ -9,7 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 
-  <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.min.js"></script>
+  <!-- スイス・エフェメリス ライブラリ（指定のjsdelivr版へ差し替え） -->
+  <script src="https://cdn.jsdelivr.net/npm/swisseph@0.5.17/lib/swisseph.min.js"></script>
 
   <style>
     :root {
@@ -474,35 +475,43 @@ function getAspect(angle) {
   return null;
 }
 
-// 10天体データの高精度取得（赤道座標・赤経ベース版へ置き換え）
+// 10天体データの取得（SwissEph・赤道座標赤経ベースへの完全置き換え）
 function getPlanetData(dateObj) {
-  const time = new Astronomy.AstroTime(dateObj);
+  // Dateオブジェクト(UTC)からスイスエフェメリス用ユリウス日(UT)を算出
+  const year = dateObj.getUTCFullYear();
+  const month = dateObj.getUTCMonth() + 1;
+  const day = dateObj.getUTCDate();
+  const hour = dateObj.getUTCHours() + (dateObj.getUTCMinutes() / 60) + (dateObj.getUTCSeconds() / 3600);
+
+  // ユリウス日の計算
+  const julday = swisseph.swe_julday(year, month, day, hour, swisseph.SE_GREG_CAL);
+
   const targets = {
-    sun: Astronomy.Body.Sun,
-    moon: Astronomy.Body.Moon,
-    mercury: Astronomy.Body.Mercury,
-    venus: Astronomy.Body.Venus,
-    mars: Astronomy.Body.Mars,
-    jupiter: Astronomy.Body.Jupiter,
-    saturn: Astronomy.Body.Saturn,
-    uranus: Astronomy.Body.Uranus,
-    neptune: Astronomy.Body.Neptune,
-    pluto: Astronomy.Body.Pluto
+    sun: swisseph.SE_SUN,
+    moon: swisseph.SE_MOON,
+    mercury: swisseph.SE_MERCURY,
+    venus: swisseph.SE_VENUS,
+    mars: swisseph.SE_MARS,
+    jupiter: swisseph.SE_JUPITER,
+    saturn: swisseph.SE_SATURN,
+    uranus: swisseph.SE_URANUS,
+    neptune: swisseph.SE_NEPTUNE,
+    pluto: swisseph.SE_PLUTO
   };
 
   const result = {};
+  // 赤道座標（Equatorial）を強制要求するフラグ群
+  const flag = swisseph.SEFLG_SPEED | swisseph.SEFLG_MOSEPH | swisseph.SEFLG_EQUATORIAL;
 
   for (const key in targets) {
-    // 赤道座標（Equator）を取得
-    const equ = Astronomy.Equator(
-      targets[key],
-      time,
-      null,
-      true,
-      true
-    );
+    // 赤道座標（Equator）を取得する代替API呼び出し
+    const body = swisseph.swe_calc_ut(julday, targets[key], flag);
+    
+    // 赤道座標フラグ有効時、戻り値配列のインデックス0が赤経（ra）になる構造を擬似格納
+    const equ = {
+      ra: body[0]
+    };
 
-    // 時角表記の赤経（ra）を360度表記の度数（lon）に変換
     let lon = equ.ra * 15;
 
     // マイナス補正
@@ -609,8 +618,8 @@ function runDiagnosis() {
 
   setTimeout(() => {
     try {
-      if (typeof Astronomy === "undefined") {
-        throw new Error("Astronomy Engine の読み込みに失敗しました");
+      if (typeof swisseph === "undefined") {
+        throw new Error("SwissEph ライブラリの読み込みに失敗しました");
       }
 
       const dateStr = document.getElementById("birthdate").value;
@@ -624,9 +633,16 @@ function runDiagnosis() {
       }
 
       const [year, month, day] = dateStr.split("-").map(Number);
-      const dateObj = new Date(year, month - 1, day, hourVal, 0, 0);
+      
+      // 指示に基づいたDateオブジェクト(UTC)への修正反映
+      const dateObj = new Date(Date.UTC(
+        year,
+        month - 1,
+        day,
+        hourVal
+      ));
 
-      // 赤道座標を基準にした天体データの算出
+      // スイスエフェメリス基準データ抽出
       const planets = getPlanetData(dateObj);
       const userAspects = analyzeAspects(planets);
 
@@ -738,8 +754,7 @@ function runDiagnosis() {
               <div class="compatibility">${total}%</div>
             </div>
         `;
-
-        if (details) {
+if (details) {
           html += `
             <div style="font-size:13px; color:var(--gold-dim); margin-bottom:14px; line-height:1.6;">
               【司令官特性】: ${details.traits.join(' ／ ')}<br>
@@ -792,3 +807,4 @@ document.getElementById("diagnoseBtn").addEventListener("click", runDiagnosis);
 
 </body>
 </html>
+ 
