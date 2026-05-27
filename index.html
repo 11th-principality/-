@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 
-  <script src="https://cdn.jsdelivr.net/npm/astronomy-engine/astronomy.min.js"></script>
+  <script src="https://unpkg.com/astronomy-engine@2.1.19/astronomy.min.js"></script>
 
   <style>
     :root {
@@ -274,13 +274,6 @@
       font-family: 'Cinzel', serif;
       letter-spacing: .2em;
     }
-
-    .info-list {
-      margin-top: 10px;
-      padding-left: 18px;
-      font-size: 14px;
-      color: var(--cream-dim);
-    }
   </style>
 </head>
 
@@ -345,7 +338,7 @@ const signs = [
   "Sagittarius","Capricorn","Aquarius","Pisces"
 ];
 
-// 追加データ：司令官リスト
+// 司令官マスタ
 const commanders = [
   {
     name: "楠本柊生帝國元帥",
@@ -370,7 +363,7 @@ const commanders = [
   }
 ];
 
-// 追加データ：公國リスト
+// 公國マスタ
 const nations = [
   {
     name: "第1公國", animal: "サソリ", industry: "墓掘り", climate: "砂漠",
@@ -389,7 +382,7 @@ const nations = [
   }
 ];
 
-// 旧キャラクターデータ（互換維持用マスタ）
+// 既存キャラクター構造（表示・相性ロジック互換用）
 const characters = [
   { name: "楠本柊生帝國元帥", title: "皇任独裁官 / 第5公國最高司令官", sun: "Capricorn", moon: "Leo", mercury: "Sagittarius", mars: "Aries", unit: "第5公國最高司令部" },
   { name: "立花馨大将", title: "統合幕僚総監 / 第4公國最高司令官", sun: "Aries", moon: "Cancer", mercury: "Taurus", mars: "Capricorn", unit: "第4公國最高司令部" },
@@ -407,7 +400,7 @@ const characters = [
   { name: "武藤優作中尉", title: "元帥府付副官", sun: "Aquarius", moon: "Scorpio", mercury: "Aquarius", mars: "Aquarius", unit: "元帥府直轄" }
 ];
 
-// 追加データ：解釈マスタ
+// テキスト解説解釈マスタ
 const interpretation = {
   sun: {
     Aries: "前進意欲が強く、停滞を嫌う。",
@@ -426,20 +419,20 @@ const interpretation = {
   moon: {
     Aries: "精神反応速度が速い。",
     Taurus: "精神安定性が高い。",
-    Gemini: "感情の切り替えが柔軟。",
-    Cancer: "防衛本能と仲間意識が強い。",
-    Leo: "自己肯定感とプライドが高い。",
-    Virgo: "実務的で繊細な精神性。",
-    Libra: "対人調和を求める心理。",
+    Gemini: "感情の揺らぎを機動力に転換する。",
+    Cancer: "仲間内での調和と一体感を求める。",
+    Leo: "誇り高く揺るぎない確固たる精神力を持つ。",
+    Virgo: "環境を緻密に把握しようとする防衛本能。",
+    Libra: "客観的かつスマートに均整を保つ。",
     Scorpio: "感情集中傾向が強い。",
-    Sagittarius: "精神的自由を重んじる。",
+    Sagittarius: "束縛を嫌い常に理想を追い求める。",
     Capricorn: "感情抑制能力が高い。",
-    Aquarius: "客観的で冷静な心理。",
-    Pisces: "高い感受性と同調性。"
+    Aquarius: "理知的で一歩引いた客観性を維持する。",
+    Pisces: "包容力があり周囲の波動に同調しやすい。"
   }
 };
 
-// 追加データ：アスペクト解釈
+// アスペクト解釈
 const aspectInterpretation = {
   "Moon-Pluto-Conjunction": { score: ["精神力", 20], text: "対象への執着力が極端に強い。心理的耐久性能が高い。" },
   "Sun-Mars-Trine": { score: ["行動力", 18], text: "行動決断と実行速度が非常に速い。" },
@@ -448,7 +441,7 @@ const aspectInterpretation = {
   "Mars-Pluto-Conjunction": { score: ["攻撃性", 22], text: "極端な突破力を持つ。" }
 };
 
-// ユーティリティ
+// ユーティリティ関数
 const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1);
 
 function getSign(longitude) {
@@ -481,7 +474,7 @@ function getAspect(angle) {
   return null;
 }
 
-// 10天体データの取得
+// 10天体データの高精度取得（地球中心ベクトル＆黄道変換）
 function getPlanetData(dateObj) {
   const time = new Astronomy.AstroTime(dateObj);
   const targets = {
@@ -498,13 +491,27 @@ function getPlanetData(dateObj) {
   };
 
   const result = {};
+
   for (const key in targets) {
-    const lon = Astronomy.EclipticLongitude(targets[key], time);
+    // 地球中心座標を取得
+    const vector = Astronomy.GeoVector(targets[key], time, false);
+
+    // 黄道座標へ変換
+    const ecliptic = Astronomy.Ecliptic(vector);
+
+    let lon = ecliptic.elon;
+
+    // マイナス補正
+    if (lon < 0) {
+      lon += 360;
+    }
+
     result[key] = {
       longitude: lon,
       sign: getSign(lon)
     };
   }
+
   return result;
 }
 
@@ -524,6 +531,7 @@ function analyzeAspects(planets) {
       if (!aspect) continue;
 
       const key = `${capitalize(p1)}-${capitalize(p2)}-${aspect}`;
+
       if (aspectInterpretation[key]) {
         result.push({
           key,
@@ -536,7 +544,7 @@ function analyzeAspects(planets) {
   return result;
 }
 
-// 相性計算
+// 三区分・四元素に基づく古典相性計算
 function getCompatibility(a, b) {
   if (a === b) return 94;
 
@@ -581,7 +589,7 @@ function createStat(label, value) {
   `;
 }
 
-// 診断実行メインロジック
+// 診断メインロジック
 function runDiagnosis() {
   console.log("診断開始");
 
@@ -618,7 +626,6 @@ function runDiagnosis() {
       const planets = getPlanetData(dateObj);
       const userAspects = analyzeAspects(planets);
 
-      // 基本サイン情報
       const userSign = {
         sun: planets.sun.sign,
         moon: planets.moon.sign,
@@ -626,7 +633,7 @@ function runDiagnosis() {
         mars: planets.mars.sign
       };
 
-      // 1. 軍人人格解析結果 & 戦略特性の構築
+      // 1. 軍人人格解析結果
       let html = `
         <div class="result-title">
           ── 軍人人格解析結果 ──
@@ -643,7 +650,7 @@ function runDiagnosis() {
         html += `<div class="trait-key" style="font-size:12px; margin-bottom:10px;">天体アスペクトによる特殊補正</div>`;
         userAspects.forEach(a => {
           html += `
-            <div style="background:rgba(255,255,255,.02); padding:10px; margin-bottom:8px; border-inline-start: 2px solid var(--gold-dim); font-size:14px;">
+            <div style="background:rgba(255,255,255,.02); padding:10px; margin-bottom:8px; border-left: 2px solid var(--gold-dim); font-size:14px;">
               <strong>[${a.key}]</strong> ${a.text} <span style="color:var(--gold-light);">(${a.score[0]}+${a.score[1]})</span>
             </div>
           `;
@@ -651,7 +658,7 @@ function runDiagnosis() {
       }
       html += `</div>`;
 
-      // 2. 公國適性評価
+      // 2. 地政学的公國適性
       html += `
         <div class="result-title">
           ── 地政学的公國適性 ──
@@ -664,13 +671,13 @@ function runDiagnosis() {
             <div class="cmd-header">
               <div>
                 <div class="cmd-name">${nat.name}</div>
-                <div class="cmd-title">環境: ${nat.climate} / 象徴生物: ${nat.animal} / 主力産業: ${nat.industry}</div>
+                <div class="cmd-title">環境: ${nat.climate} ／ 象徴生物: ${nat.animal} ／ 主力産業: ${nat.industry}</div>
               </div>
-              <div class="compatibility" style="font-size:18px; color:${isSuitable ? 'var(--gold-light)' : 'var(--cream-dim)'};">
+              <div class="compatibility" style="font-size:16px; color:${isSuitable ? 'var(--gold-light)' : 'var(--cream-dim)'};">
                 ${isSuitable ? '【最良適性地域】' : '【標準適性地域】'}
               </div>
             </div>
-            <div class="performance" style="font-size:14px;">
+            <div class="performance" style="font-size:14px; margin-top:10px;">
               主要テーマ：${nat.themes.map(t => `#${t}`).join(' ')}
             </div>
           </div>
@@ -690,10 +697,9 @@ function runDiagnosis() {
         const s = getCompatibility(userSign.mercury, char.mercury);
         const a = getCompatibility(userSign.mars, char.mars);
 
-        // 基本スコア算出
         let total = Math.floor((p * 1.2 + m * 1.15 + s * 0.95 + a * 0.9) / 4);
 
-        // アスペクトの補正値を加算
+        // アスペクトによる特性値加算フィードバック
         userAspects.forEach(asp => {
           total += Math.floor(asp.score[1] / 5); 
         });
@@ -716,7 +722,6 @@ function runDiagnosis() {
           performance = "標準的適性。訓練次第で更なる戦力向上が見込まれる。";
         }
 
-        // 追加の司令官プロフィール情報をマッピング
         const details = commanders.find(c => c.name === char.name);
 
         html += `
@@ -732,7 +737,7 @@ function runDiagnosis() {
 
         if (details) {
           html += `
-            <div style="font-size:13px; color:var(--gold-dim); margin-bottom:10px;">
+            <div style="font-size:13px; color:var(--gold-dim); margin-bottom:14px; line-height:1.6;">
               【司令官特性】: ${details.traits.join(' ／ ')}<br>
               【要求兵員資質】: ${details.prefers.join('、')}
             </div>
@@ -748,7 +753,7 @@ function runDiagnosis() {
             </div>
             <div class="performance">
               ${performance}
-            </div>
+  </div>
             <div class="unit">
               配属推奨：${char.unit}
             </div>
