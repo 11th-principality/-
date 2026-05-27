@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>第14帝國非公式 戦略部隊配属診断</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/astronomy-engine/astronomy.min.js"></script>
+
+  <style>
+    :root {
+      --gold: #c9a84c;
+      --gold-light: #e8d08a;
+      --gold-dim: #8a6f2e;
+      --cream: #f5ede0;
+      --cream-dim: #d9c9b0;
+      --ink: #1a1410;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #120d08;
+      color: var(--cream);
+      font-family: 'EB Garamond', serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .page-wrapper {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 40px 20px 100px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(24px, 5vw, 38px);
+      line-height: 1.5;
+      color: var(--gold-light);
+      letter-spacing: .12em;
+      text-shadow: 0 0 30px rgba(201,168,76,.25);
+    }
+
+    .ornament {
+      margin-top: 14px;
+      color: var(--gold-dim);
+      letter-spacing: 10px;
+    }
+
+    .subtitle {
+      margin-top: 14px;
+      font-family: 'Cinzel', serif;
+      letter-spacing: .3em;
+      color: var(--gold-dim);
+      font-size: 12px;
+    }
+
+    .intro-box {
+      border: 1px solid rgba(201,168,76,.25);
+      padding: 30px;
+      text-align: center;
+      margin-bottom: 32px;
+      background: rgba(255,255,255,.02);
+    }
+
+    .intro-box p {
+      line-height: 2;
+      color: var(--cream-dim);
+      font-style: italic;
+    }
+
+    .panel {
+      background: linear-gradient(145deg, rgba(33,22,12,.95), rgba(18,12,7,.98));
+      border: 1px solid rgba(201,168,76,.2);
+      padding: 34px;
+    }
+
+    .field-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 640px) {
+      .field-group {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 8px;
+      font-family: 'Cinzel', serif;
+      color: var(--gold-dim);
+      font-size: 11px;
+      letter-spacing: .25em;
+      text-transform: uppercase;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(0,0,0,.45);
+      border: 1px solid rgba(201,168,76,.25);
+      color: white;
+      font-size: 16px;
+      font-family: inherit;
+    }
+
+    .btn {
+      width: 100%;
+      margin-top: 28px;
+      padding: 18px;
+      border: none;
+      cursor: pointer;
+      font-family: 'Cinzel', serif;
+      letter-spacing: .3em;
+      font-size: 13px;
+      font-weight: bold;
+      color: #1a1410;
+      background: linear-gradient(135deg, #7a5c1e, #d7b96a, #7a5c1e);
+      transition: .25s;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px rgba(201,168,76,.18);
+    }
+
+    .btn:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    #result {
+      margin-top: 50px;
+    }
+
+    .result-title {
+      text-align: center;
+      margin-bottom: 26px;
+      color: var(--gold-light);
+      font-family: 'Cinzel Decorative', serif;
+      letter-spacing: .15em;
+      font-size: 18px;
+    }
+
+    .traits-card,
+    .cmd-card {
+      background: linear-gradient(145deg, rgba(30,20,12,.96), rgba(15,10,6,.98));
+      border: 1px solid rgba(201,168,76,.2);
+      padding: 28px;
+      margin-bottom: 26px;
+    }
+
+    .traits-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 640px) {
+      .traits-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .trait-item {
+      background: rgba(255,255,255,.03);
+      padding: 14px;
+      border-left: 2px solid var(--gold-dim);
+    }
+
+    .trait-key {
+      display: block;
+      color: var(--gold-dim);
+      font-size: 10px;
+      margin-bottom: 5px;
+      letter-spacing: .2em;
+      font-family: 'Cinzel', serif;
+    }
+
+    .trait-val {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .cmd-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 18px;
+      align-items: flex-start;
+    }
+
+    .cmd-name {
+      color: var(--gold-light);
+      font-size: 18px;
+      font-family: 'Cinzel', serif;
+      margin-bottom: 4px;
+    }
+
+    .cmd-title {
+      color: var(--cream-dim);
+      font-style: italic;
+      font-size: 13px;
+    }
+
+    .compatibility {
+      font-size: 34px;
+      font-family: 'Cinzel Decorative', serif;
+      color: var(--gold-light);
+    }
+
+    .stats {
+      margin-top: 18px;
+    }
+
+    .stat {
+      margin-bottom: 14px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .bar-bg {
+      height: 4px;
+      background: rgba(255,255,255,.08);
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold-light));
+    }
+
+    .performance {
+      margin-top: 18px;
+      line-height: 1.7;
+      color: var(--cream-dim);
+    }
+
+    .unit {
+      margin-top: 18px;
+      color: var(--gold);
+    }
+
+    .reset-btn {
+      margin-top: 20px;
+      width: 100%;
+      padding: 14px;
+      background: transparent;
+      border: 1px solid var(--gold-dim);
+      color: var(--gold-light);
+      cursor: pointer;
+      font-family: 'Cinzel', serif;
+      letter-spacing: .2em;
+    }
+
+    .info-list {
+      margin-top: 10px;
+      padding-left: 18px;
+      font-size: 14px;
+      color: var(--cream-dim);
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="page-wrapper">
+
+  <header>
+    <h1>
+      第14帝國<br>
+      戦略部隊配属診断<br>
+      非公式
+    </h1>
+
+    <div class="ornament">✦ ✦ ✦</div>
+
+    <div class="subtitle">
+      ReichsRitter
+    </div>
+  </header>
+
+  <div class="intro-box">
+    <p>
+      生年月日と出生時間より<br>
+      星辰の導きを解析し<br>
+      汝に最も適した帝國部隊への<br>
+      配属を下命する
+    </p>
+  </div>
+
+  <div class="panel">
+
+    <div class="field-group">
+
+      <div>
+        <label class="field-label">生年月日</label>
+        <input type="date" id="birthdate">
+      </div>
+
+      <div>
+        <label class="field-label">出生時間（0〜23）</label>
+        <input type="number" id="hour" min="0" max="23" value="12">
+      </div>
+
+    </div>
+
+    <button class="btn" id="diagnoseBtn">
+      ── 診断を開始せよ ──
+    </button>
+
+  </div>
+
+  <div id="result"></div>
+
+</div>
+
+<script>
+
+const signs = [
+  "Aries","Taurus","Gemini","Cancer",
+  "Leo","Virgo","Libra","Scorpio",
+  "Sagittarius","Capricorn","Aquarius","Pisces"
+];
+
+// 追加データ：司令官リスト
+const commanders = [
+  {
+    name: "楠本柊生帝國元帥",
+    nation: "第5公國",
+    planets: { sun: "Capricorn", moon: "Leo", mercury: "Sagittarius", venus: "Aquarius", mars: "Aries" },
+    traits: ["統制", "長期戦", "責任", "支配", "軍事合理主義"],
+    prefers: ["継続力", "忍耐", "命令遂行", "精神力"]
+  },
+  {
+    name: "立花馨大将",
+    nation: "第4公國",
+    planets: { sun: "Aries", moon: "Cancer", mercury: "Taurus", venus: "Pisces", mars: "Capricorn" },
+    traits: ["突撃", "保護", "現場指揮", "実行力"],
+    prefers: ["忠誠", "持久力", "防衛意識"]
+  },
+  {
+    name: "定光寺輝信中将",
+    nation: "第7公國",
+    planets: { sun: "Leo", moon: "Virgo", mercury: "Leo", venus: "Cancer", mars: "Aquarius" },
+    traits: ["威厳", "教育", "理論", "秩序"],
+    prefers: ["知性", "分析", "冷静さ"]
+  }
+];
+
+// 追加データ：公國リスト
+const nations = [
+  {
+    name: "第1公國", animal: "サソリ", industry: "墓掘り", climate: "砂漠",
+    themes: ["孤独", "古代", "執念", "遺跡", "死"],
+    suitable: ["Scorpio", "Capricorn", "Virgo"]
+  },
+  {
+    name: "第5公國", animal: "ペンギン", industry: "軍需産業", climate: "極寒",
+    themes: ["統制", "軍事", "工業", "忍耐", "合理性"],
+    suitable: ["Capricorn", "Aquarius", "Aries"]
+  },
+  {
+    name: "第11公國", animal: "キツネ", industry: "林業", climate: "森林",
+    themes: ["自然", "静寂", "観察", "持続", "独立"],
+    suitable: ["Virgo", "Taurus", "Cancer"]
+  }
+];
+
+// 旧キャラクターデータ（互換維持用マスタ）
+const characters = [
+  { name: "楠本柊生帝國元帥", title: "皇任独裁官 / 第5公國最高司令官", sun: "Capricorn", moon: "Leo", mercury: "Sagittarius", mars: "Aries", unit: "第5公國最高司令部" },
+  { name: "立花馨大将", title: "統合幕僚総監 / 第4公國最高司令官", sun: "Aries", moon: "Cancer", mercury: "Taurus", mars: "Capricorn", unit: "第4公國最高司令部" },
+  { name: "定光寺輝信中将", title: "統帥参謀総長 / 第7公國最高司令官", sun: "Leo", moon: "Virgo", mercury: "Leo", mars: "Aquarius", unit: "第7公國最高司令部" },
+  { name: "鳴海建一少将", title: "宮廷近衛長官 / 第6公國最高司令官", sun: "Scorpio", moon: "Cancer", mercury: "Scorpio", mars: "Capricorn", unit: "第6公國最高司令部" },
+  { name: "天崎一桂少将", title: "最高司令官代行 / 第8公國最高司令官", sun: "Scorpio", moon: "Leo", mercury: "Sagittarius", mars: "Pisces", unit: "第8公國最高司令部" },
+  { name: "草薙護大佐", title: "第13公國最高司令官", sun: "Capricorn", moon: "Virgo", mercury: "Capricorn", mars: "Gemini", unit: "第13公國最高司令部" },
+  { name: "春木亮太朗大佐", title: "第11公國最高司令官", sun: "Aquarius", moon: "Taurus", mercury: "Aquarius", mars: "Taurus", unit: "第11公國最高司令部" },
+  { name: "星野和臣中佐", title: "第3公國最高司令官", sun: "Aries", moon: "Libra", mercury: "Aries", mars: "Aquarius", unit: "第3公國最高司令官" },
+  { name: "加納友緒中佐", title: "第1公國最高司令官", sun: "Capricorn", moon: "Libra", mercury: "Capricorn", mars: "Virgo", unit: "第1公國最高司令部" },
+  { name: "風間利之少佐", title: "第2公國最高司令官", sun: "Scorpio", moon: "Aries", mercury: "Scorpio", mars: "Scorpio", unit: "第2公國最高司令部" },
+  { name: "秋山祐少佐", title: "第9公國最高司令官", sun: "Gemini", moon: "Cancer", mercury: "Cancer", mars: "Taurus", unit: "第9公國最高司令部" },
+  { name: "長沢環大尉", title: "元帥府付副官", sun: "Aries", moon: "Capricorn", mercury: "Pisces", mars: "Leo", unit: "元帥府直轄" },
+  { name: "有馬竜ノ介大尉", title: "元帥府付副官", sun: "Virgo", moon: "Virgo", mercury: "Virgo", mars: "Taurus", unit: "元帥府直轄" },
+  { name: "武藤優作中尉", title: "元帥府付副官", sun: "Aquarius", moon: "Scorpio", mercury: "Aquarius", mars: "Aquarius", unit: "元帥府直轄" }
+];
+
+// 追加データ：解釈マスタ
+const interpretation = {
+  sun: {
+    Aries: "前進意欲が強く、停滞を嫌う。",
+    Taurus: "安定した持久力を持ち、長期維持能力が高い。",
+    Gemini: "状況変化への適応が速い。",
+    Cancer: "保護対象への献身性が高い。",
+    Leo: "指揮権掌握への意識が強い。",
+    Virgo: "分析と修正能力に優れる。",
+    Libra: "全体均衡を重視する。",
+    Scorpio: "極端な集中力を持つ。",
+    Sagittarius: "拡大型思考傾向。",
+    Capricorn: "統制と結果を重視する。",
+    Aquarius: "独自理論による改革志向。",
+    Pisces: "状況同調能力が高い。"
+  },
+  moon: {
+    Aries: "精神反応速度が速い。",
+    Taurus: "精神安定性が高い。",
+    Gemini: "感情の切り替えが柔軟。",
+    Cancer: "防衛本能と仲間意識が強い。",
+    Leo: "自己肯定感とプライドが高い。",
+    Virgo: "実務的で繊細な精神性。",
+    Libra: "対人調和を求める心理。",
+    Scorpio: "感情集中傾向が強い。",
+    Sagittarius: "精神的自由を重んじる。",
+    Capricorn: "感情抑制能力が高い。",
+    Aquarius: "客観的で冷静な心理。",
+    Pisces: "高い感受性と同調性。"
+  }
+};
+
+// 追加データ：アスペクト解釈
+const aspectInterpretation = {
+  "Moon-Pluto-Conjunction": { score: ["精神力", 20], text: "対象への執着力が極端に強い。心理的耐久性能が高い。" },
+  "Sun-Mars-Trine": { score: ["行動力", 18], text: "行動決断と実行速度が非常に速い。" },
+  "Mercury-Saturn-Trine": { score: ["分析", 16], text: "戦略構築能力に優れる。" },
+  "Moon-Saturn-Square": { score: ["精神力", 8], text: "感情抑制傾向。慢性的緊張を抱えやすい。" },
+  "Mars-Pluto-Conjunction": { score: ["攻撃性", 22], text: "極端な突破力を持つ。" }
+};
+
+// ユーティリティ
+const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1);
+
+function getSign(longitude) {
+  return signs[Math.floor(longitude / 30)];
+}
+
+function calcAngle(a, b) {
+  let diff = Math.abs(a - b);
+  if (diff > 180) {
+    diff = 360 - diff;
+  }
+  return diff;
+}
+
+function getAspect(angle) {
+  const aspects = [
+    { name: "Conjunction", angle: 0, orb: 8 },
+    { name: "Sextile", angle: 60, orb: 5 },
+    { name: "Square", angle: 90, orb: 6 },
+    { name: "Trine", angle: 120, orb: 6 },
+    { name: "Opposition", angle: 180, orb: 8 }
+  ];
+
+  for (const asp of aspects) {
+    const diff = Math.abs(angle - asp.angle);
+    if (diff <= asp.orb) {
+      return asp.name;
+    }
+  }
+  return null;
+}
+
+// 10天体データの取得
+function getPlanetData(dateObj) {
+  const time = new Astronomy.AstroTime(dateObj);
+  const targets = {
+    sun: Astronomy.Body.Sun,
+    moon: Astronomy.Body.Moon,
+    mercury: Astronomy.Body.Mercury,
+    venus: Astronomy.Body.Venus,
+    mars: Astronomy.Body.Mars,
+    jupiter: Astronomy.Body.Jupiter,
+    saturn: Astronomy.Body.Saturn,
+    uranus: Astronomy.Body.Uranus,
+    neptune: Astronomy.Body.Neptune,
+    pluto: Astronomy.Body.Pluto
+  };
+
+  const result = {};
+  for (const key in targets) {
+    const lon = Astronomy.EclipticLongitude(targets[key], time);
+    result[key] = {
+      longitude: lon,
+      sign: getSign(lon)
+    };
+  }
+  return result;
+}
+
+// アスペクトの抽出分析
+function analyzeAspects(planets) {
+  const result = [];
+  const keys = Object.keys(planets);
+
+  for (let i = 0; i < keys.length; i++) {
+    for (let j = i + 1; j < keys.length; j++) {
+      const p1 = keys[i];
+      const p2 = keys[j];
+
+      const angle = calcAngle(planets[p1].longitude, planets[p2].longitude);
+      const aspect = getAspect(angle);
+
+      if (!aspect) continue;
+
+      const key = `${capitalize(p1)}-${capitalize(p2)}-${aspect}`;
+      if (aspectInterpretation[key]) {
+        result.push({
+          key,
+          text: aspectInterpretation[key].text,
+          score: aspectInterpretation[key].score
+        });
+      }
+    }
+  }
+  return result;
+}
+
+// 相性計算
+function getCompatibility(a, b) {
+  if (a === b) return 94;
+
+  const elements = {
+    Fire: ["Aries","Leo","Sagittarius"],
+    Earth: ["Taurus","Virgo","Capricorn"],
+    Air: ["Gemini","Libra","Aquarius"],
+    Water: ["Cancer","Scorpio","Pisces"]
+  };
+
+  const getElement = sign => Object.keys(elements).find(el => elements[el].includes(sign));
+
+  const ea = getElement(a);
+  const eb = getElement(b);
+
+  if (ea === eb) return 86;
+
+  if (
+    (ea==="Fire" && eb==="Air") || (ea==="Air" && eb==="Fire") ||
+    (ea==="Earth" && eb==="Water") || (ea==="Water" && eb==="Earth")
+  ) return 78;
+
+  if (
+    (ea==="Fire" && eb==="Water") || (ea==="Water" && eb==="Fire") ||
+    (ea==="Earth" && eb==="Air") || (ea==="Air" && eb==="Earth")
+  ) return 51;
+
+  return 64;
+}
+
+function createStat(label, value) {
+  return `
+    <div class="stat">
+      <div class="stat-row">
+        <span>${label}</span>
+        <span>${value}%</span>
+      </div>
+      <div class="bar-bg">
+        <div class="bar-fill" style="width:${value}%"></div>
+      </div>
+    </div>
+  `;
+}
+
+// 診断実行メインロジック
+function runDiagnosis() {
+  console.log("診断開始");
+
+  const btn = document.getElementById("diagnoseBtn");
+  const resultDiv = document.getElementById("result");
+
+  btn.disabled = true;
+  resultDiv.innerHTML = `
+    <p style="text-align:center;padding:40px;color:#c9a84c;">
+      天体を解析中…
+    </p>
+  `;
+
+  setTimeout(() => {
+    try {
+      if (typeof Astronomy === "undefined") {
+        throw new Error("Astronomy Engine の読み込みに失敗しました");
+      }
+
+      const dateStr = document.getElementById("birthdate").value;
+      if (!dateStr) {
+        throw new Error("生年月日を入力してください");
+      }
+
+      const hourVal = parseInt(document.getElementById("hour").value);
+      if (isNaN(hourVal) || hourVal < 0 || hourVal > 23) {
+        throw new Error("出生時間は0〜23で入力してください");
+      }
+
+      const [year, month, day] = dateStr.split("-").map(Number);
+      const dateObj = new Date(year, month - 1, day, hourVal, 0, 0);
+
+      // 高精度天体データの算出
+      const planets = getPlanetData(dateObj);
+      const userAspects = analyzeAspects(planets);
+
+      // 基本サイン情報
+      const userSign = {
+        sun: planets.sun.sign,
+        moon: planets.moon.sign,
+        mercury: planets.mercury.sign,
+        mars: planets.mars.sign
+      };
+
+      // 1. 軍人人格解析結果 & 戦略特性の構築
+      let html = `
+        <div class="result-title">
+          ── 軍人人格解析結果 ──
+        </div>
+        <div class="traits-card">
+          <div class="trait-key" style="font-size:12px; margin-bottom:10px;">主星による本質傾向</div>
+          <div class="trait-val" style="margin-bottom:20px; border-left: 2px solid var(--gold); padding-left:10px;">
+            ${interpretation.sun[userSign.sun] || "未定義の領域です。"} 
+            ${interpretation.moon[userSign.moon] ? `<br><span style="font-size:14px; color:var(--cream-dim);">${interpretation.moon[userSign.moon]}</span>` : ""}
+          </div>
+      `;
+
+      if (userAspects.length > 0) {
+        html += `<div class="trait-key" style="font-size:12px; margin-bottom:10px;">天体アスペクトによる特殊補正</div>`;
+        userAspects.forEach(a => {
+          html += `
+            <div style="background:rgba(255,255,255,.02); padding:10px; margin-bottom:8px; border-inline-start: 2px solid var(--gold-dim); font-size:14px;">
+              <strong>[${a.key}]</strong> ${a.text} <span style="color:var(--gold-light);">(${a.score[0]}+${a.score[1]})</span>
+            </div>
+          `;
+        });
+      }
+      html += `</div>`;
+
+      // 2. 公國適性評価
+      html += `
+        <div class="result-title">
+          ── 地政学的公國適性 ──
+        </div>
+      `;
+      nations.forEach(nat => {
+        const isSuitable = nat.suitable.includes(userSign.sun) || nat.suitable.includes(userSign.mars);
+        html += `
+          <div class="traits-card">
+            <div class="cmd-header">
+              <div>
+                <div class="cmd-name">${nat.name}</div>
+                <div class="cmd-title">環境: ${nat.climate} / 象徴生物: ${nat.animal} / 主力産業: ${nat.industry}</div>
+              </div>
+              <div class="compatibility" style="font-size:18px; color:${isSuitable ? 'var(--gold-light)' : 'var(--cream-dim)'};">
+                ${isSuitable ? '【最良適性地域】' : '【標準適性地域】'}
+              </div>
+            </div>
+            <div class="performance" style="font-size:14px;">
+              主要テーマ：${nat.themes.map(t => `#${t}`).join(' ')}
+            </div>
+          </div>
+        `;
+      });
+
+      // 3. 各司令官との適合評定
+      html += `
+        <div class="result-title">
+          ── 各司令官との適合評定 ──
+        </div>
+      `;
+
+      const results = characters.map(char => {
+        const p = getCompatibility(userSign.sun, char.sun);
+        const m = getCompatibility(userSign.moon, char.moon);
+        const s = getCompatibility(userSign.mercury, char.mercury);
+        const a = getCompatibility(userSign.mars, char.mars);
+
+        // 基本スコア算出
+        let total = Math.floor((p * 1.2 + m * 1.15 + s * 0.95 + a * 0.9) / 4);
+
+        // アスペクトの補正値を加算
+        userAspects.forEach(asp => {
+          total += Math.floor(asp.score[1] / 5); 
+        });
+        if (total > 100) total = 100;
+
+        return { char, total, p, m, s, a };
+      });
+
+      results.sort((a, b) => b.total - a.total);
+
+      results.forEach(({char, total, p, m, s, a}) => {
+        let performance = "";
+        if (total > 84) {
+          performance = "この部隊の主力として、大規模作戦の中心任務を担う可能性が高い。";
+        } else if (total > 76) {
+          performance = "高い適応能力を持ち、重要局面において大きな戦果を期待される。";
+        } else if (total > 67) {
+          performance = "安定した補佐戦力として堅実に任務を遂行可能。";
+        } else {
+          performance = "標準的適性。訓練次第で更なる戦力向上が見込まれる。";
+        }
+
+        // 追加の司令官プロフィール情報をマッピング
+        const details = commanders.find(c => c.name === char.name);
+
+        html += `
+          <div class="cmd-card">
+            <div class="cmd-header">
+              <div>
+                <div class="cmd-name">${char.name}</div>
+                <div class="cmd-title">${char.title}</div>
+              </div>
+              <div class="compatibility">${total}%</div>
+            </div>
+        `;
+
+        if (details) {
+          html += `
+            <div style="font-size:13px; color:var(--gold-dim); margin-bottom:10px;">
+              【司令官特性】: ${details.traits.join(' ／ ')}<br>
+              【要求兵員資質】: ${details.prefers.join('、')}
+            </div>
+          `;
+        }
+
+        html += `
+            <div class="stats">
+              ${createStat("戦闘目的", p)}
+              ${createStat("精神力", m)}
+              ${createStat("戦略思考", s)}
+              ${createStat("攻撃様式", a)}
+            </div>
+            <div class="performance">
+              ${performance}
+            </div>
+            <div class="unit">
+              配属推奨：${char.unit}
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+        <button class="reset-btn" onclick="location.reload()">
+          もう一度診断する
+        </button>
+      `;
+
+      resultDiv.innerHTML = html;
+
+    } catch (err) {
+      console.error(err);
+      resultDiv.innerHTML = `
+        <p style="color:#ff6b6b; text-align:center; padding:40px; line-height:1.8;">
+          ${err.message}
+        </p>
+      `;
+    } finally {
+      btn.disabled = false;
+    }
+  }, 500);
+}
+
+document.getElementById("diagnoseBtn").addEventListener("click", runDiagnosis);
+
+</script>
+
+</body>
+</html>
