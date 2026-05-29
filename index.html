@@ -97,7 +97,8 @@
 <script>
 const signs = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
 
-const traits = {"Aries": { sun:"突撃", moon:"勇敢", mercury:"迅速", mars:"突進" },
+const traits ={
+  "Aries": { sun:"突撃", moon:"勇敢", mercury:"迅速", mars:"突進" },
   "Taurus": { sun:"防衛", moon:"堅実", mercury:"慎重", mars:"重圧" },
   "Gemini": { sun:"撹乱", moon:"変幻", mercury:"多角", mars:"奇襲" },
   "Cancer": { sun:"守護", moon:"忍耐", mercury:"精密", mars:"波状" },
@@ -109,7 +110,7 @@ const traits = {"Aries": { sun:"突撃", moon:"勇敢", mercury:"迅速", mars:"
   "Capricorn": { sun:"制圧", moon:"忍耐", mercury:"長期", mars:"着実" },
   "Aquarius": { sun:"革新", moon:"不屈", mercury:"奇策", mars:"電撃" },
   "Pisces": { sun:"希望", moon:"適応", mercury:"直感", mars:"流動" }
-};
+               };
 const interpretation = {
   sun: {
     Aries:"前進意欲が強く、停滞を嫌う。", Taurus:"安定した持久力を持ち、長期維持能力が高い。",
@@ -147,7 +148,7 @@ const nations = [
   { name:"第13公國", commander:"草薙護大佐", animal:"羊", specialty:"ガム", industry:"精密機械工業", climate:"高原", themes:["精密","牧草","時計","職人","寒冷"], affinity:{ sun:["Virgo","Capricorn","Taurus"], moon:["Virgo","Capricorn","Taurus"], venus:["Virgo","Taurus","Capricorn"], mars:["Virgo","Capricorn","Taurus"] }, memo:"その牧草地の多さから放牧が盛んであったが、近年は時計などの精密機械工業が主流。夏は涼しく、冬寒い。" }
 ];
 
-const characters= [
+const characters = [
   { name:"楠本柊生帝國元帥", title:"皇任独裁官 / 第5公國最高司令官", sun:"Capricorn", moon:"Leo", mercury:"Sagittarius", mars:"Aries", unit:"第5公國最高司令部" },
   { name:"立花馨大将", title:"統合幕僚総監 / 第4公國最高司令官", sun:"Aries", moon:"Cancer", mercury:"Taurus", mars:"Capricorn", unit:"第4公國最高司令部" },
   { name:"定光寺輝信中将", title:"統帥参謀総長 / 第7公國最高司令官", sun:"Leo", moon:"Virgo", mercury:"Leo", mars:"Aquarius", unit:"第7公國最高司令部" },
@@ -223,7 +224,7 @@ function runDiagnosis() {
 
       let html = '<div class="result-title">── 配属下命書 ──</div>';
 
-      // 戦略特性（省略せず記載）
+     / 戦略特性
       html += `<div class="traits-card">
         <div class="field-label" style="margin-bottom:18px;">貴殿の戦略特性</div>
         <div class="traits-grid">
@@ -236,8 +237,7 @@ function runDiagnosis() {
         <div class="section-label">本質傾向</div>
         <div class="essence-block">${interpretation.sun[userSign.sun] || ""}<br><span style="font-size:14px;color:var(--cream-dim);">${interpretation.moon[userSign.moon] || ""}</span></div>
       </div>`;
-
-      // ====================== 公國適性 ======================
+           // ====================== 公國適性 ======================
       html += '<div class="result-title">── 地政学的公國適性 ──</div>';
 
       const nationResults = nations.map(nat => {
@@ -311,9 +311,24 @@ function runDiagnosis() {
         const performance = r.total > 84 ? "主力として大規模作戦の中心を担う可能性が高い。" : 
                            r.total > 76 ? "重要局面で大きな戦果が期待される。" : 
                            r.total > 67 ? "安定した補佐戦力として堅実。" : "訓練次第で更なる向上が見込まれる。";
-        html += `<div class="cmd-card"> ... </div>`; // 詳細カード（前回と同じ形式）
-      }
-
+        html += `<div class="cmd-card">
+          <div class="cmd-header">
+            <div>
+              <div class="cmd-name">${r.char.name}</div>
+              <div class="cmd-title">${r.char.title}</div>
+            </div>
+            <div class="compatibility">${r.total}%</div>
+          </div>
+          <div class="stats">
+            ${createStat("戦闘目的", r.p)}
+            ${createStat("精神力", r.m)}
+            ${createStat("戦略思考", r.s)}
+            ${createStat("攻撃様式", r.a)}
+          </div>
+          <div class="performance">${performance}</div>
+          <div class="unit">配属推奨：${r.char.unit}</div>
+        </div>`;
+      });
       // 残りを折りたたみ
       html += `<details class="accordion"><summary>その他の司令官 (${commanderResults.length - 3}名)</summary>`;
       for (let i = 3; i < commanderResults.length; i++) {
