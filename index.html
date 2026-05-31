@@ -8,37 +8,38 @@
     <style>
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
         body {
-            margin: 0;
-            padding: 10px 5px;
             background-color: #1a1a1a;
             color: #ffffff;
             font-family: 'Helvetica Neue', Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
+            padding: 10px 5px;
             min-height: 100vh;
             overflow-x: hidden;
             overflow-y: auto;
         }
 
-        /* 💡 【新設】最上部の横スクロール式・階級進化表 */
+        /* 👑 最上部の横型スクロール進化表 */
         #evolution-chart-top {
             width: 100%;
-            max-width: 420px;
+            max-width: 400px;
             background: rgba(44, 37, 32, 0.95);
             border: 2px solid #d4af37;
             border-radius: 8px;
-            padding: 8px;
+            padding: 6px;
             margin-bottom: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
         
         #evolution-chart-top h3 {
-            font-size: 12px;
+            font-size: 11px;
             color: #d4af37;
-            margin: 0 0 6px 0;
+            margin-bottom: 4px;
             text-align: center;
             font-weight: bold;
         }
@@ -47,19 +48,15 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            overflow-x: auto; /* 横スクロールを有効化 */
+            overflow-x: auto;
             padding-bottom: 4px;
-            /* スクロールバーの見た目を滑らかに */
             -webkit-overflow-scrolling: touch;
         }
         
-        /* スクロールバーのデザイン（非表示にしてスッキリさせる） */
+        /* スクロールバー非表示 */
         .scroll-wrapper::-webkit-scrollbar {
-            height: 4px;
-        }
-        .scroll-wrapper::-webkit-scrollbar-thumb {
-            background: #d4af37;
-            border-radius: 2px;
+            height: 0px;
+            background: transparent;
         }
 
         .chart-item-horizontal {
@@ -68,15 +65,15 @@
             align-items: center;
             background: rgba(0,0,0,0.4);
             border-radius: 6px;
-            padding: 4px 8px;
-            min-width: 75px;
-            flex-shrink: 0; /* 横潰れ防止 */
+            padding: 4px 6px;
+            min-width: 65px;
+            flex-shrink: 0;
             text-align: center;
         }
 
         .chart-avatar {
-            width: 26px;
-            height: 26px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             border: 1px solid #fff;
             background-size: cover;
@@ -85,85 +82,84 @@
         }
 
         .chart-rank {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: bold;
             color: #d4af37;
         }
 
         .chart-name {
-            font-size: 9px;
+            font-size: 8px;
             color: #fff;
             white-space: nowrap;
         }
 
         .chart-arrow-horizontal {
-            font-size: 10px;
+            font-size: 9px;
             color: #d4af37;
             flex-shrink: 0;
-            padding: 0 2px;
         }
 
         h1 {
-            font-size: 16px;
-            margin: 0 0 8px 0;
+            font-size: 15px;
+            margin-bottom: 6px;
             color: #d4af37;
             text-shadow: 1px 1px 3px #000;
             text-align: center;
         }
 
-        /* 📱 スマホの画面幅に自動追従するメインコンテナ */
+        /* 📱 スマホにジャストフィットするゲームコンテナ */
         #game-container {
             position: relative;
             width: 100%;
-            max-width: 420px; /* パソコン等で開いた時の最大サイズ */
-            aspect-ratio: 420 / 650; /* 比率を維持 */
+            max-width: 400px;
+            height: 580px; /* 高さを少しコンパクトにして画面内に収めやすく */
             background: #2c2520;
             border: 4px solid #d4af37;
             border-radius: 12px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.8);
-            touch-action: none; /* スマホの意図しないズームやスクロールを防止 */
+            touch-action: none;
         }
 
         #score-board {
             position: absolute;
-            top: 12px;
-            left: 12px;
-            font-size: 16px;
+            top: 10px;
+            left: 10px;
+            font-size: 15px;
             font-weight: bold;
             background: rgba(0, 0, 0, 0.75);
             color: #fff;
-            padding: 5px 10px;
-            border-radius: 6px;
+            padding: 4px 8px;
+            border-radius: 5px;
             border: 1px solid #d4af37;
             z-index: 10;
         }
 
         #next-preview {
             position: absolute;
-            top: 12px;
-            right: 12px;
-            width: 75px;
+            top: 10px;
+            right: 10px;
+            width: 70px;
             background: rgba(0, 0, 0, 0.75);
             border-radius: 8px;
             border: 1px solid #d4af37;
             z-index: 10;
             text-align: center;
-            padding: 6px;
+            padding: 4px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
         .preview-title {
-            font-size: 9px;
+            font-size: 8px;
             color: #aaa;
             margin-bottom: 2px;
             font-weight: bold;
         }
 
         #next-avatar {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             border: 1px solid #fff;
             background-size: cover;
@@ -172,13 +168,13 @@
         }
 
         #next-name {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: bold;
             line-height: 1.1;
         }
 
         #next-rank {
-            font-size: 9px;
+            font-size: 8px;
             color: #d4af37;
         }
 
@@ -205,41 +201,41 @@
 
         #game-over-screen h2 {
             color: #ff4d4d;
-            font-size: 26px;
+            font-size: 24px;
             margin-bottom: 8px;
         }
 
         #game-over-screen p {
-            font-size: 16px;
-            margin-bottom: 16px;
+            font-size: 15px;
+            margin-bottom: 15px;
         }
 
         #restart-btn {
             background: #d4af37;
             color: #000;
             border: none;
-            padding: 10px 20px;
-            font-size: 15px;
+            padding: 8px 16px;
+            font-size: 14px;
             font-weight: bold;
-            border-radius: 6px;
+            border-radius: 5px;
             cursor: pointer;
         }
 
         #guide {
-            margin-top: 8px;
+            margin-top: 6px;
             font-size: 11px;
             color: #bbb;
             text-align: center;
-            max-width: 420px;
-            padding: 0 10px;
-            line-height: 1.4;
+            max-width: 400px;
+            padding: 0 5px;
+            line-height: 1.3;
         }
     </style>
 </head>
 <body>
 
     <div id="evolution-chart-top">
-        <h3>🎖️ 帝國軍 階級進化表（横にスワイプで確認）</h3>
+        <h3>🎖️ 帝國軍 階級進化表（横スクロール可能）</h3>
         <div class="scroll-wrapper" id="chart-list-horizontal"></div>
     </div>
 
@@ -266,21 +262,21 @@
 
     <div id="guide">
         【遊び方】画面をタップしてリッターを投下せよ！<br>
-        同じ階級がくっつくと出世する。目指せ、楠本元帥！
+        同じ階級が重なると出世する。目指せ、楠本元帥！
     </div>
 
 <script>
-// キャラクターデータ＆イラストURL設定（前回の設定を維持）
+// キャラクターデータ＆イラストURL設定
 const EVOLUTION_LINE = [
-    { level: 1, rank: "中尉", radius: 26, score: 10, characters: [{ name: "武藤優作", color: "#cca43b", sign: "♒", imgUrl: "" }] },
-    { level: 2, rank: "大尉", radius: 34, score: 20, characters: [{ name: "長沢環", color: "#a67c52", sign: "♈", imgUrl: "" }, { name: "有馬竜之介", color: "#315659", sign: "♍", imgUrl: "" }] },
-    { level: 3, rank: "少佐", radius: 42, score: 40, characters: [{ name: "風間利之", color: "#b23a48", sign: "♏", imgUrl: "" }, { name: "秋山祐", color: "#df7a27", sign: "♊", imgUrl: "" }] },
-    { level: 4, rank: "中佐", radius: 51, score: 80, characters: [{ name: "星野和臣", color: "#ded686", sign: "♈", imgUrl: "" }, { name: "加納友緒", color: "#e3db9a", sign: "♑", imgUrl: "" }] },
-    { level: 5, rank: "大佐", radius: 62, score: 160, characters: [{ name: "草薙護", color: "#466060", sign: "♑", imgUrl: "" }, { name: "春木亮太朗", color: "#d18ca4", sign: "♒", imgUrl: "" }] },
-    { level: 6, rank: "少将", radius: 74, score: 320, characters: [{ name: "鳴海健一", color: "#eadaa2", sign: "♏", imgUrl: "" }, { name: "天崎一桂", color: "#f0e6bd", sign: "♏", imgUrl: "" }] },
-    { level: 7, rank: "中将", radius: 88, score: 640, characters: [{ name: "定光寺輝信", color: "#c94a53", sign: "♌", imgUrl: "" }] },
-    { level: 8, rank: "大将", radius: 104, score: 1280, characters: [{ name: "立花馨", color: "#7c7c7c", sign: "♈", imgUrl: "" }] },
-    { level: 9, rank: "帝國元帥", radius: 122, score: 2560, characters: [{ name: "楠本柊生", color: "#256eff", sign: "♑", imgUrl: "" }] }
+    { level: 1, rank: "中尉", radius: 24, score: 10, characters: [{ name: "武藤優作", color: "#cca43b", sign: "♒", imgUrl: "" }] },
+    { level: 2, rank: "大尉", radius: 31, score: 20, characters: [{ name: "長沢環", color: "#a67c52", sign: "♈", imgUrl: "" }, { name: "有馬竜之介", color: "#315659", sign: "♍", imgUrl: "" }] },
+    { level: 3, rank: "少佐", radius: 39, score: 40, characters: [{ name: "風間利之", color: "#b23a48", sign: "♏", imgUrl: "" }, { name: "秋山祐", color: "#df7a27", sign: "♊", imgUrl: "" }] },
+    { level: 4, rank: "中佐", radius: 48, score: 80, characters: [{ name: "星野和臣", color: "#ded686", sign: "♈", imgUrl: "" }, { name: "加納友緒", color: "#e3db9a", sign: "♑", imgUrl: "" }] },
+    { level: 5, rank: "大佐", radius: 58, score: 160, characters: [{ name: "草薙護", color: "#466060", sign: "♑", imgUrl: "" }, { name: "春木亮太朗", color: "#d18ca4", sign: "♒", imgUrl: "" }] },
+    { level: 6, rank: "少将", radius: 69, score: 320, characters: [{ name: "鳴海健一", color: "#eadaa2", sign: "♏", imgUrl: "" }, { name: "天崎一桂", color: "#f0e6bd", sign: "♏", imgUrl: "" }] },
+    { level: 7, rank: "中将", radius: 81, score: 640, characters: [{ name: "定光寺輝信", color: "#c94a53", sign: "♌", imgUrl: "" }] },
+    { level: 8, rank: "大将", radius: 94, score: 1280, characters: [{ name: "立花馨", color: "#7c7c7c", sign: "♈", imgUrl: "" }] },
+    { level: 9, rank: "帝國元帥", radius: 110, score: 2560, characters: [{ name: "楠本柊生", color: "#256eff", sign: "♑", imgUrl: "" }] }
 ];
 
 function getCharacterImageSrc(char, rank) {
@@ -301,14 +297,15 @@ function preloadImages() {
     EVOLUTION_LINE.forEach(stage => {
         stage.characters.forEach(char => {
             const src = getCharacterImageSrc(char, stage.rank);
-            const img = new Image();
-            img.src = src;
-            imageCache[char.name] = img;
+            if (!imageCache[char.name]) {
+                const img = new Image();
+                img.src = src;
+                imageCache[char.name] = img;
+            }
         });
     });
 }
 
-// 💡 【新設】上部の横並び進化表を生成するロジック
 function buildHorizontalEvolutionChart() {
     const listContainer = document.getElementById("chart-list-horizontal");
     listContainer.innerHTML = "";
@@ -337,8 +334,8 @@ function buildHorizontalEvolutionChart() {
     });
 }
 
-// --- 物理エンジン設定 ---
-const { Engine, Render, Runner, Bodies, Composite, Body, Events } = Matter;
+// --- Matter.js 物理演算機構 ---
+const { Engine, Render, Runner, Bodies, Composite, Events } = Matter;
 
 let engine, render, runner;
 let score = 0;
@@ -347,10 +344,10 @@ let nextLevel = 1;
 let nextCharacter = null;
 let canDrop = true;
 
-// 物理演算上の仮想解像度（420x650の比率で固定）
-const baseWidth = 420;
-const baseHeight = 650;
-const deadlineY = 130; 
+// 仮想内部解像度（固定して比率計算を行う）
+const baseWidth = 400;
+const baseHeight = 580;
+const deadlineY = 120; 
 
 const container = document.getElementById("game-container");
 const canvas = document.getElementById("game-canvas");
@@ -359,9 +356,9 @@ function initGame() {
     preloadImages();
     buildHorizontalEvolutionChart();
 
-    engine = Engine.create({ gravity: { y: 1.3 } });
+    engine = Engine.create({ gravity: { y: 1.2 } });
     
-    // キャンバスの実サイズを設定
+    // Canvasの物理解像度を設定
     canvas.width = baseWidth;
     canvas.height = baseHeight;
 
@@ -379,6 +376,7 @@ function initGame() {
     Render.run(render);
     runner = Runner.run(engine);
 
+    // 壁の配置
     const wallOptions = { isStatic: true, render: { fillStyle: "#5d4e43" } };
     const ground = Bodies.rectangle(baseWidth / 2, baseHeight + 30, baseWidth, 80, wallOptions);
     const leftWall = Bodies.rectangle(-30, baseHeight / 2, 80, baseHeight, wallOptions);
@@ -411,16 +409,14 @@ function determineNext() {
     document.getElementById("next-rank").innerText = stage.rank;
 }
 
-// タップ・クリック座標処理のスマホ対応化
-function handleDropEvent(e) {
+// 落下処理
+function handleDrop(clientX) {
     if (!canDrop || isGameOver) return;
     
     const rect = container.getBoundingClientRect();
-    // クライアント座標がマウスかタッチかで分岐
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const relativeX = clientX - rect.left;
     
-    // 表示サイズから物理エンジン上の仮想座標(0〜420)へ変換
+    // クライアントの表示幅から、内部解像度（0〜400）の座標へ正しく変換
     let clickX = (relativeX / rect.width) * baseWidth;
     
     const stage = EVOLUTION_LINE[nextLevel - 1];
@@ -429,7 +425,8 @@ function handleDropEvent(e) {
     if (clickX < minX) clickX = minX;
     if (clickX > maxX) clickX = maxX;
 
-    dropRitter(clickX, nextLevel, nextCharacter);
+    const ritter = createRitterBody(clickX, deadlineY - 30, nextLevel, nextCharacter);
+    Composite.add(engine.world, ritter);
     
     canDrop = false;
     setTimeout(() => {
@@ -437,21 +434,28 @@ function handleDropEvent(e) {
             canDrop = true;
             determineNext();
         }
-    }, 550);
+    }, 500);
 }
 
-container.addEventListener("click", handleDropEvent);
-container.addEventListener("touchstart", (e) => {
-    e.preventDefault(); // スマホのダブルタップズーム等を防止
-    handleDropEvent(e);
+// PC用クリックイベント
+container.addEventListener("click", (e) => {
+    handleDrop(e.clientX);
 });
+
+// スマホ用タッチイベント
+container.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    if (e.touches.length > 0) {
+        handleDrop(e.touches[0].clientX);
+    }
+}, { passive: false });
 
 function createRitterBody(x, y, level, specificChar = null) {
     const stage = EVOLUTION_LINE[level - 1];
     const charData = specificChar || stage.characters[Math.floor(Math.random() * stage.characters.length)];
     
     return Bodies.circle(x, y, stage.radius, {
-        restitution: 0.25,
+        restitution: 0.2,
         friction: 0.1,
         label: "ritter",
         plugin: {
@@ -461,11 +465,6 @@ function createRitterBody(x, y, level, specificChar = null) {
             spawnTime: Date.now()
         }
     });
-}
-
-function dropRitter(x, level, character) {
-    const ritter = createRitterBody(x, deadlineY - 35, level, character);
-    Composite.add(engine.world, ritter);
 }
 
 function handleCollisions(event) {
@@ -511,7 +510,7 @@ function checkGameOverLine() {
     const now = Date.now();
     for (let body of bodies) {
         if (body.label === "ritter" && !body.isStatic) {
-            if (now - body.plugin.spawnTime > 2000) {
+            if (now - body.plugin.spawnTime > 2000) { // 投下後2秒の猶予
                 if (body.position.y - body.circleRadius < deadlineY) {
                     triggerGameOver();
                     break;
@@ -543,6 +542,7 @@ function setupCanvasCustomDraw() {
     Events.on(render, 'afterRender', () => {
         const ctx = render.context;
         
+        // 警告デッドライン
         ctx.beginPath();
         ctx.moveTo(0, deadlineY);
         ctx.lineTo(baseWidth, deadlineY);
@@ -573,3 +573,23 @@ function setupCanvasCustomDraw() {
                     ctx.beginPath();
                     ctx.arc(0, 0, radius, 0, 2 * Math.PI);
                     ctx.fillStyle = color;
+                    ctx.fill();
+                }
+                
+                ctx.beginPath();
+                ctx.arc(0, 0, radius, 0, 2 * Math.PI);
+                ctx.strokeStyle = "#ffffff";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+        });
+    });
+}
+
+// 起動
+initGame();
+</script>
+</body>
+</html>
