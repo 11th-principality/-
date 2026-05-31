@@ -2,177 +2,190 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>第14帝國リッター・マージ！〜元帥への道〜</title>
-    <!-- Matter.js 物理エンジンを読み込み -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
             margin: 0;
-            padding: 0;
+            padding: 10px 5px;
             background-color: #1a1a1a;
             color: #ffffff;
             font-family: 'Helvetica Neue', Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             min-height: 100vh;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* 💡 【新設】最上部の横スクロール式・階級進化表 */
+        #evolution-chart-top {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(44, 37, 32, 0.95);
+            border: 2px solid #d4af37;
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        
+        #evolution-chart-top h3 {
+            font-size: 12px;
+            color: #d4af37;
+            margin: 0 0 6px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .scroll-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            overflow-x: auto; /* 横スクロールを有効化 */
+            padding-bottom: 4px;
+            /* スクロールバーの見た目を滑らかに */
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* スクロールバーのデザイン（非表示にしてスッキリさせる） */
+        .scroll-wrapper::-webkit-scrollbar {
+            height: 4px;
+        }
+        .scroll-wrapper::-webkit-scrollbar-thumb {
+            background: #d4af37;
+            border-radius: 2px;
+        }
+
+        .chart-item-horizontal {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0,0,0,0.4);
+            border-radius: 6px;
+            padding: 4px 8px;
+            min-width: 75px;
+            flex-shrink: 0; /* 横潰れ防止 */
+            text-align: center;
+        }
+
+        .chart-avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 1px solid #fff;
+            background-size: cover;
+            background-position: center;
+            margin-bottom: 2px;
+        }
+
+        .chart-rank {
+            font-size: 10px;
+            font-weight: bold;
+            color: #d4af37;
+        }
+
+        .chart-name {
+            font-size: 9px;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        .chart-arrow-horizontal {
+            font-size: 10px;
+            color: #d4af37;
+            flex-shrink: 0;
+            padding: 0 2px;
         }
 
         h1 {
-            font-size: 22px;
-            margin: 5px 0 10px 0;
+            font-size: 16px;
+            margin: 0 0 8px 0;
             color: #d4af37;
-            text-shadow: 2px 2px 4px #000;
-            letter-spacing: 1px;
+            text-shadow: 1px 1px 3px #000;
+            text-align: center;
         }
 
-        /* 横並びにするためのメインコンテナ */
-        #main-layout {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-        }
-
+        /* 📱 スマホの画面幅に自動追従するメインコンテナ */
         #game-container {
             position: relative;
-            width: 420px;
-            height: 680px;
+            width: 100%;
+            max-width: 420px; /* パソコン等で開いた時の最大サイズ */
+            aspect-ratio: 420 / 650; /* 比率を維持 */
             background: #2c2520;
             border: 4px solid #d4af37;
             border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.8);
+            touch-action: none; /* スマホの意図しないズームやスクロールを防止 */
         }
 
         #score-board {
             position: absolute;
-            top: 15px;
-            left: 15px;
-            font-size: 20px;
+            top: 12px;
+            left: 12px;
+            font-size: 16px;
             font-weight: bold;
             background: rgba(0, 0, 0, 0.75);
             color: #fff;
-            padding: 6px 14px;
+            padding: 5px 10px;
             border-radius: 6px;
             border: 1px solid #d4af37;
             z-index: 10;
         }
 
-        /* パワーアップしたNEXTプレビュー */
         #next-preview {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            width: 90px;
+            top: 12px;
+            right: 12px;
+            width: 75px;
             background: rgba(0, 0, 0, 0.75);
             border-radius: 8px;
             border: 1px solid #d4af37;
             z-index: 10;
             text-align: center;
-            padding: 8px;
+            padding: 6px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
         .preview-title {
-            font-size: 11px;
+            font-size: 9px;
             color: #aaa;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             font-weight: bold;
         }
 
         #next-avatar {
-            width: 45px;
-            height: 45px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            border: 2px solid #fff;
+            border: 1px solid #fff;
             background-size: cover;
             background-position: center;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         #next-name {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: bold;
-            line-height: 1.2;
+            line-height: 1.1;
         }
 
         #next-rank {
-            font-size: 10px;
+            font-size: 9px;
             color: #d4af37;
-            margin-top: 2px;
         }
 
         #game-canvas {
             width: 100%;
             height: 100%;
-        }
-
-        /* 画面右側に常駐する階級進化表 */
-        #evolution-chart {
-            width: 200px;
-            background: rgba(44, 37, 32, 0.9);
-            border: 2px solid #d4af37;
-            border-radius: 10px;
-            padding: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            max-height: 650px;
-            overflow-y: auto;
-        }
-
-        #evolution-chart h3 {
-            font-size: 14px;
-            color: #d4af37;
-            margin: 0 0 10px 0;
-            text-align: center;
-            border-bottom: 1px solid #d4af37;
-            padding-bottom: 5px;
-        }
-
-        .chart-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 6px;
-            padding: 4px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 5px;
-            font-size: 11px;
-        }
-
-        .chart-avatar {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            border: 1px solid #fff;
-            background-size: cover;
-            background-position: center;
-            flex-shrink: 0;
-        }
-
-        .chart-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .chart-rank {
-            font-weight: bold;
-            color: #d4af37;
-        }
-
-        .chart-name {
-            color: #fff;
-            font-size: 10px;
-        }
-
-        .chart-arrow {
-            text-align: center;
-            font-size: 10px;
-            color: #665235;
-            margin: -2px 0 4px 0;
+            display: block;
         }
 
         #game-over-screen {
@@ -192,155 +205,86 @@
 
         #game-over-screen h2 {
             color: #ff4d4d;
-            font-size: 32px;
-            margin-bottom: 10px;
-            letter-spacing: 2px;
+            font-size: 26px;
+            margin-bottom: 8px;
         }
 
         #game-over-screen p {
-            font-size: 18px;
-            margin-bottom: 20px;
+            font-size: 16px;
+            margin-bottom: 16px;
         }
 
         #restart-btn {
             background: #d4af37;
             color: #000;
             border: none;
-            padding: 12px 25px;
-            font-size: 16px;
+            padding: 10px 20px;
+            font-size: 15px;
             font-weight: bold;
             border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-
-        #restart-btn:hover {
-            background: #fff;
-            transform: scale(1.05);
         }
 
         #guide {
-            margin-top: 10px;
-            font-size: 13px;
+            margin-top: 8px;
+            font-size: 11px;
             color: #bbb;
             text-align: center;
+            max-width: 420px;
+            padding: 0 10px;
+            line-height: 1.4;
         }
     </style>
 </head>
 <body>
 
-    <h1>🎖️ 第14帝國リッター・マージ！〜元帥への道〜</h1>
+    <div id="evolution-chart-top">
+        <h3>🎖️ 帝國軍 階級進化表（横にスワイプで確認）</h3>
+        <div class="scroll-wrapper" id="chart-list-horizontal"></div>
+    </div>
+
+    <h1>🎖️ 第14帝國リッター・マージ！</h1>
     
-    <div id="main-layout">
-        <!-- ゲーム画面 -->
-        <div id="game-container">
-            <div id="score-board">SCORE: <span id="score-value">0</span></div>
-            
-            <div id="next-preview">
-                <div class="preview-title">NEXT</div>
-                <div id="next-avatar"></div>
-                <div id="next-name">???</div>
-                <div id="next-rank">???</div>
-            </div>
-            
-            <div id="game-over-screen">
-                <h2>作戦失敗 (GAME OVER)</h2>
-                <p>最終得点: <span id="final-score">0</span></p>
-                <button id="restart-btn" onclick="resetGame()">再出撃する</button>
-            </div>
-
-            <canvas id="game-canvas"></canvas>
+    <div id="game-container">
+        <div id="score-board">SCORE: <span id="score-value">0</span></div>
+        
+        <div id="next-preview">
+            <div class="preview-title">NEXT</div>
+            <div id="next-avatar"></div>
+            <div id="next-name">???</div>
+            <div id="next-rank">???</div>
+        </div>
+        
+        <div id="game-over-screen">
+            <h2>作戦失敗 (GAME OVER)</h2>
+            <p>最終得点: <span id="final-score">0</span></p>
+            <button id="restart-btn" onclick="resetGame()">再出撃する</button>
         </div>
 
-        <!-- 右側：階級進化表（自動生成される） -->
-        <div id="evolution-chart">
-            <h3>🎖️ 帝國軍 階級進化表</h3>
-            <div id="chart-list"></div>
-        </div>
+        <canvas id="game-canvas"></canvas>
     </div>
 
     <div id="guide">
-        【遊び方】戦場（画面内）をクリック/タップしてリッターを投下せよ！<br>
-        同じ階級が接触すると出世（合体）する。頼むぞ、未来の楠本元帥！
+        【遊び方】画面をタップしてリッターを投下せよ！<br>
+        同じ階級がくっつくと出世する。目指せ、楠本元帥！
     </div>
 
 <script>
-// ==========================================
-// 🎨 キャラクターデータ ＆ イラストURL設定
-// ==========================================
-// ※将来的に画像をネットにアップロードしたら、imgUrl: "" の中にそのURLを貼り付けてください！
-// 例： imgUrl: "https://i.imgur.com/xxxxx.png"
-// 空欄の場合は、自動的に名前入りの綺麗な丸画像が代理で生成されます。
-
+// キャラクターデータ＆イラストURL設定（前回の設定を維持）
 const EVOLUTION_LINE = [
-    {
-        level: 1, rank: "中尉", radius: 26, score: 10,
-        characters: [
-            { name: "武藤優作", color: "#cca43b", sign: "♒", imgUrl: "" }
-        ]
-    },
-    {
-        level: 2, rank: "大尉", radius: 34, score: 20,
-        characters: [
-            { name: "長沢環", color: "#a67c52", sign: "♈", imgUrl: "" },
-            { name: "有馬竜之介", color: "#315659", sign: "♍", imgUrl: "" }
-        ]
-    },
-    {
-        level: 3, rank: "少佐", radius: 42, score: 40,
-        characters: [
-            { name: "風間利之", color: "#b23a48", sign: "♏", imgUrl: "" },
-            { name: "秋山祐", color: "#df7a27", sign: "♊", imgUrl: "" }
-        ]
-    },
-    {
-        level: 4, rank: "中佐", radius: 51, score: 80,
-        characters: [
-            { name: "星野和臣", color: "#ded686", sign: "♈", imgUrl: "" },
-            { name: "加納友緒", color: "#e3db9a", sign: "♑", imgUrl: "" }
-        ]
-    },
-    {
-        level: 5, rank: "大佐", radius: 62, score: 160,
-        characters: [
-            { name: "草薙護", color: "#466060", sign: "♑", imgUrl: "" },
-            { name: "春木亮太朗", color: "#d18ca4", sign: "♒", imgUrl: "" }
-        ]
-    },
-    {
-        level: 6, rank: "少将", radius: 74, score: 320,
-        characters: [
-            { name: "鳴海健一", color: "#eadaa2", sign: "♏", imgUrl: "" },
-            { name: "天崎一桂", color: "#f0e6bd", sign: "♏", imgUrl: "" }
-        ]
-    },
-    {
-        level: 7, rank: "中将", radius: 88, score: 640,
-        characters: [
-            { name: "定光寺輝信", color: "#c94a53", sign: "♌", imgUrl: "" }
-        ]
-    },
-    {
-        level: 8, rank: "大将", radius: 104, score: 1280,
-        characters: [
-            { name: "立花馨", color: "#7c7c7c", sign: "♈", imgUrl: "" }
-        ]
-    },
-    {
-        level: 9, rank: "帝國元帥", radius: 122, score: 2560,
-        characters: [
-            { name: "楠本柊生", color: "#256eff", sign: "♑", imgUrl: "" }
-        ]
-    }
+    { level: 1, rank: "中尉", radius: 26, score: 10, characters: [{ name: "武藤優作", color: "#cca43b", sign: "♒", imgUrl: "" }] },
+    { level: 2, rank: "大尉", radius: 34, score: 20, characters: [{ name: "長沢環", color: "#a67c52", sign: "♈", imgUrl: "" }, { name: "有馬竜之介", color: "#315659", sign: "♍", imgUrl: "" }] },
+    { level: 3, rank: "少佐", radius: 42, score: 40, characters: [{ name: "風間利之", color: "#b23a48", sign: "♏", imgUrl: "" }, { name: "秋山祐", color: "#df7a27", sign: "♊", imgUrl: "" }] },
+    { level: 4, rank: "中佐", radius: 51, score: 80, characters: [{ name: "星野和臣", color: "#ded686", sign: "♈", imgUrl: "" }, { name: "加納友緒", color: "#e3db9a", sign: "♑", imgUrl: "" }] },
+    { level: 5, rank: "大佐", radius: 62, score: 160, characters: [{ name: "草薙護", color: "#466060", sign: "♑", imgUrl: "" }, { name: "春木亮太朗", color: "#d18ca4", sign: "♒", imgUrl: "" }] },
+    { level: 6, rank: "少将", radius: 74, score: 320, characters: [{ name: "鳴海健一", color: "#eadaa2", sign: "♏", imgUrl: "" }, { name: "天崎一桂", color: "#f0e6bd", sign: "♏", imgUrl: "" }] },
+    { level: 7, rank: "中将", radius: 88, score: 640, characters: [{ name: "定光寺輝信", color: "#c94a53", sign: "♌", imgUrl: "" }] },
+    { level: 8, rank: "大将", radius: 104, score: 1280, characters: [{ name: "立花馨", color: "#7c7c7c", sign: "♈", imgUrl: "" }] },
+    { level: 9, rank: "帝國元帥", radius: 122, score: 2560, characters: [{ name: "楠本柊生", color: "#256eff", sign: "♑", imgUrl: "" }] }
 ];
 
-// 画像が未設定の場合に自動でアバター画像を動的生成する関数（プレースホルダー）
 function getCharacterImageSrc(char, rank) {
-    if (char.imgUrl && char.imgUrl.trim() !== "") {
-        return char.imgUrl;
-    }
-    // イラストが無い時は、文字入りの可愛いSVG画像をデータURLとして生成
+    if (char.imgUrl && char.imgUrl.trim() !== "") return char.imgUrl;
     const svg = `
         <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
             <circle cx="50" cy="50" r="46" fill="${char.color}" stroke="#ffffff" stroke-width="3"/>
@@ -352,7 +296,6 @@ function getCharacterImageSrc(char, rank) {
     return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
 }
 
-// 画像キャッシュ用オブジェクト
 const imageCache = {};
 function preloadImages() {
     EVOLUTION_LINE.forEach(stage => {
@@ -365,38 +308,30 @@ function preloadImages() {
     });
 }
 
-// 右側の進化表を画面に構築する関数
-function buildEvolutionChart() {
-    const listContainer = document.getElementById("chart-list");
+// 💡 【新設】上部の横並び進化表を生成するロジック
+function buildHorizontalEvolutionChart() {
+    const listContainer = document.getElementById("chart-list-horizontal");
     listContainer.innerHTML = "";
     
-    // 下位の階級(Lv.1)から順番に表示
     EVOLUTION_LINE.forEach((stage, index) => {
         const item = document.createElement("div");
-        item.className = "chart-item";
+        item.className = "chart-item-horizontal";
         
-        // 代表して1人目のキャラの見た目を表示
         const mainChar = stage.characters[0];
         const imgSrc = getCharacterImageSrc(mainChar, stage.rank);
-        
-        // 複数人いる階級は名前を繋げる
-        const names = stage.characters.map(c => c.name.substring(0,4)).join(" / ");
+        const names = stage.characters.map(c => c.name.substring(0,2)).join("/");
         
         item.innerHTML = `
             <div class="chart-avatar" style="background-image: url('${imgSrc}'); border-color: ${mainChar.color}"></div>
-            <div class="chart-info">
-                <div class="chart-rank">Lv.${stage.level} ${stage.rank}</div>
-                <div class="chart-name">${names}</div>
-            </div>
+            <div class="chart-rank">${stage.rank}</div>
+            <div class="chart-name">${names}</div>
         `;
-        
         listContainer.appendChild(item);
         
-        // 最後の元帥以外には下向きの矢印を挟む
         if (index < EVOLUTION_LINE.length - 1) {
             const arrow = document.createElement("div");
-            arrow.className = "chart-arrow";
-            arrow.innerText = "▼ 合体進化";
+            arrow.className = "chart-arrow-horizontal";
+            arrow.innerText = "➔";
             listContainer.appendChild(arrow);
         }
     });
@@ -411,8 +346,10 @@ let isGameOver = false;
 let nextLevel = 1;
 let nextCharacter = null;
 let canDrop = true;
-const width = 420;
-const height = 680;
+
+// 物理演算上の仮想解像度（420x650の比率で固定）
+const baseWidth = 420;
+const baseHeight = 650;
 const deadlineY = 130; 
 
 const container = document.getElementById("game-container");
@@ -420,16 +357,20 @@ const canvas = document.getElementById("game-canvas");
 
 function initGame() {
     preloadImages();
-    buildEvolutionChart();
+    buildHorizontalEvolutionChart();
 
     engine = Engine.create({ gravity: { y: 1.3 } });
     
+    // キャンバスの実サイズを設定
+    canvas.width = baseWidth;
+    canvas.height = baseHeight;
+
     render = Render.create({
         canvas: canvas,
         engine: engine,
         options: {
-            width: width,
-            height: height,
+            width: baseWidth,
+            height: baseHeight,
             background: "#2c2520",
             wireframes: false
         }
@@ -439,9 +380,9 @@ function initGame() {
     runner = Runner.run(engine);
 
     const wallOptions = { isStatic: true, render: { fillStyle: "#5d4e43" } };
-    const ground = Bodies.rectangle(width / 2, height + 30, width, 80, wallOptions);
-    const leftWall = Bodies.rectangle(-30, height / 2, 80, height, wallOptions);
-    const rightWall = Bodies.rectangle(width + 30, height / 2, 80, height, wallOptions);
+    const ground = Bodies.rectangle(baseWidth / 2, baseHeight + 30, baseWidth, 80, wallOptions);
+    const leftWall = Bodies.rectangle(-30, baseHeight / 2, 80, baseHeight, wallOptions);
+    const rightWall = Bodies.rectangle(baseWidth + 30, baseHeight / 2, 80, baseHeight, wallOptions);
     
     Composite.add(engine.world, [ground, leftWall, rightWall]);
 
@@ -458,14 +399,11 @@ function initGame() {
     setupCanvasCustomDraw();
 }
 
-// 次のリッターを決定して右上に表示
 function determineNext() {
-    // プレイヤーが落とせる初期リッターは Lv1(中尉)〜Lv3(少佐)
     nextLevel = Math.floor(Math.random() * 3) + 1;
     const stage = EVOLUTION_LINE[nextLevel - 1];
     nextCharacter = stage.characters[Math.floor(Math.random() * stage.characters.length)];
     
-    // NEXTプレビュー画面を書き換え
     const imgSrc = getCharacterImageSrc(nextCharacter, stage.rank);
     document.getElementById("next-avatar").style.backgroundImage = `url('${imgSrc}')`;
     document.getElementById("next-avatar").style.borderColor = nextCharacter.color;
@@ -473,20 +411,24 @@ function determineNext() {
     document.getElementById("next-rank").innerText = stage.rank;
 }
 
-// クリックで投下
-container.addEventListener("click", (e) => {
+// タップ・クリック座標処理のスマホ対応化
+function handleDropEvent(e) {
     if (!canDrop || isGameOver) return;
     
     const rect = container.getBoundingClientRect();
-    let clickX = e.clientX - rect.left;
+    // クライアント座標がマウスかタッチかで分岐
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const relativeX = clientX - rect.left;
+    
+    // 表示サイズから物理エンジン上の仮想座標(0〜420)へ変換
+    let clickX = (relativeX / rect.width) * baseWidth;
     
     const stage = EVOLUTION_LINE[nextLevel - 1];
     const minX = stage.radius + 10;
-    const maxX = width - stage.radius - 10;
+    const maxX = baseWidth - stage.radius - 10;
     if (clickX < minX) clickX = minX;
     if (clickX > maxX) clickX = maxX;
 
-    // 現在決まっているNEXTのキャラを落とす
     dropRitter(clickX, nextLevel, nextCharacter);
     
     canDrop = false;
@@ -495,29 +437,30 @@ container.addEventListener("click", (e) => {
             canDrop = true;
             determineNext();
         }
-    }, 550); // 次を落とせるまでのクールダウン秒数
+    }, 550);
+}
+
+container.addEventListener("click", handleDropEvent);
+container.addEventListener("touchstart", (e) => {
+    e.preventDefault(); // スマホのダブルタップズーム等を防止
+    handleDropEvent(e);
 });
 
-// リッターオブジェクトの作成
 function createRitterBody(x, y, level, specificChar = null) {
     const stage = EVOLUTION_LINE[level - 1];
-    // キャラクターが指定されていない場合は、その階級からランダム抽選
     const charData = specificChar || stage.characters[Math.floor(Math.random() * stage.characters.length)];
     
-    const ritter = Bodies.circle(x, y, stage.radius, {
+    return Bodies.circle(x, y, stage.radius, {
         restitution: 0.25,
         friction: 0.1,
         label: "ritter",
         plugin: {
             level: level,
             charName: charData.name,
-            rank: stage.rank,
             color: charData.color,
             spawnTime: Date.now()
         }
     });
-
-    return ritter;
 }
 
 function dropRitter(x, level, character) {
@@ -525,10 +468,8 @@ function dropRitter(x, level, character) {
     Composite.add(engine.world, ritter);
 }
 
-// 合体（マージ）イベント
 function handleCollisions(event) {
     const pairs = event.pairs;
-    
     for (let i = 0; i < pairs.length; i++) {
         const pair = pairs[i];
         const bodyA = pair.bodyA;
@@ -543,11 +484,7 @@ function handleCollisions(event) {
                 bodyB.isDead = true;
                 
                 const currentLevel = lvlA;
-                
-                // 最高レベル（元帥）同士はこれ以上進化しない
-                if (currentLevel >= EVOLUTION_LINE.length) {
-                    continue; 
-                }
+                if (currentLevel >= EVOLUTION_LINE.length) continue; 
                 
                 const newX = (bodyA.position.x + bodyB.position.x) / 2;
                 const newY = (bodyA.position.y + bodyB.position.y) / 2;
@@ -557,7 +494,6 @@ function handleCollisions(event) {
                     Composite.remove(engine.world, bodyA);
                     Composite.remove(engine.world, bodyB);
                     
-                    // 次の階級のリッターを生成
                     const upgradedRitter = createRitterBody(newX, newY, nextLvl);
                     Composite.add(engine.world, upgradedRitter);
                     
@@ -569,16 +505,13 @@ function handleCollisions(event) {
     }
 }
 
-// デッドライン超過チェック
 function checkGameOverLine() {
     if (isGameOver) return;
-    
     const bodies = Composite.allBodies(engine.world);
     const now = Date.now();
-    
     for (let body of bodies) {
         if (body.label === "ritter" && !body.isStatic) {
-            if (now - body.plugin.spawnTime > 2000) { // 投下直後2秒は免除
+            if (now - body.plugin.spawnTime > 2000) {
                 if (body.position.y - body.circleRadius < deadlineY) {
                     triggerGameOver();
                     break;
@@ -606,22 +539,19 @@ function resetGame() {
     initGame();
 }
 
-// Canvas上にイラスト画像（または代理SVG）を描画するシステム
 function setupCanvasCustomDraw() {
     Events.on(render, 'afterRender', () => {
         const ctx = render.context;
         
-        // 警告線の描画
         ctx.beginPath();
         ctx.moveTo(0, deadlineY);
-        ctx.lineTo(width, deadlineY);
+        ctx.lineTo(baseWidth, deadlineY);
         ctx.strokeStyle = isGameOver ? "#ff4d4d" : "rgba(212, 175, 55, 0.4)";
         ctx.lineWidth = 2;
         ctx.setLineDash([6, 4]);
         ctx.stroke();
         ctx.setLineDash([]);
         
-        // 各リッターの物理円に画像を綺麗にマッピングして描画
         const bodies = Composite.allBodies(engine.world);
         bodies.forEach(body => {
             if (body.label === "ritter") {
@@ -632,39 +562,14 @@ function setupCanvasCustomDraw() {
                 ctx.translate(body.position.x, body.position.y);
                 ctx.rotate(body.angle);
                 
-                // クリップマスクを作って画像を丸く切り抜く
                 ctx.beginPath();
                 ctx.arc(0, 0, radius, 0, 2 * Math.PI);
                 ctx.clip();
                 
-                // キャッシュしたイメージを描画
                 const img = imageCache[charName];
                 if (img && img.complete) {
-                    // 丸の大きさに合わせてぴったり描画
                     ctx.drawImage(img, -radius, -radius, radius * 2, radius * 2);
                 } else {
-                    // 万が一画像が読み込めていない時のフォールバック背景
                     ctx.beginPath();
                     ctx.arc(0, 0, radius, 0, 2 * Math.PI);
                     ctx.fillStyle = color;
-                    ctx.fill();
-                }
-                
-                // 外枠の白いシャープな線
-                ctx.beginPath();
-                ctx.arc(0, 0, radius, 0, 2 * Math.PI);
-                ctx.strokeStyle = "#ffffff";
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                
-                ctx.restore();
-            }
-        });
-    });
-}
-
-// ゲーム起動！
-initGame();
-</script>
-</body>
-</html>
